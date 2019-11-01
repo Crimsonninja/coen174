@@ -1,0 +1,13 @@
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% block styles %}
+  {{super()}}
+  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+{% endblock %}
+{% block title %}Iron Bronco{% endblock %}
+
+
+
+{% block navbar %}
+{{nav.top.render()}}
+{% endblock %}
