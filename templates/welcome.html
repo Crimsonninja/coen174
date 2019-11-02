@@ -1,0 +1,26 @@
+{% extends "bootstrap/base.html" %}
+{% import "bootstrap/fixes.html" as fixes %}
+{% block styles %}
+  {{super()}}
+  <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
+{% endblock %}
+{% block title %}Iron Bronco{% endblock %}
+
+{% block content %}
+  <div class="container">
+  {%- with messages = get_flashed_messages(with_categories=True) %}
+  {%- if messages %}
+    <div class="row">
+      <div class="col-md-12">
+        {{utils.flashed_messages(messages)}}
+      </div>
+    </div>
+  {%- endif %}
+  {%- endwith %}
+    <div class="jumbotron">
+      <h1>Welcome to the Iron Bronco</h1>
+      <p>Get to know others through a 2.4 mile swim, 112 mile bike ride, and 26.2 mile run!</p>
+      <a class="btn btn-primary" href="/login">Google Sign-in</a>
+    </div>
+   </div>
+{%- endblock %}
