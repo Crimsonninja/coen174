@@ -36,7 +36,7 @@
       <form action = "/addteam" method="post" enctype="multipart/form-data">
         <div class="form-group">
           <label for="inputTeam"></label>
-            <input name="newteam" type="team" class="form-control" id="team_name" aria-describedby="emailHelp" placeholder="Enter Team Name">
+            <input name="newteam" required="required" type="team" class="form-control" id="team_name" aria-describedby="emailHelp" placeholder="Enter Team Name">
             {%- if team_exist %}
             <div class="invalid-feedback">
               Team Already Exists

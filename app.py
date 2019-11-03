@@ -2,6 +2,7 @@ import os, json
 from flask import Flask, escape, request, redirect, render_template, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_bootstrap import Bootstrap
+from flask_dance.contrib.google import make_google_blueprint, google
 from flask_nav import Nav
 from flask_nav.elements import *
 from flask_login import (
@@ -21,6 +22,8 @@ app = Flask(__name__)
 app.config.from_object(os.environ['APP_SETTINGS'])
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
+token=None
+
 # Creating database
 db = SQLAlchemy(app)
 
@@ -31,7 +34,11 @@ GOOGLE_DISCOVERY_URL = (
     "https://accounts.google.com/.well-known/openid-configuration"
 )
 
-
+blueprint = make_google_blueprint(
+    client_id=GOOGLE_CLIENT_ID,
+    client_secret=GOOGLE_CLIENT_SECRET,
+)
+app.register_blueprint(blueprint, url_prefix="/login")
 
 # User session management setup
 # https://flask-login.readthedocs.io/en/latest
@@ -114,6 +121,8 @@ def callback():
       auth=(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET),
   )
 
+  token=token_response
+
   # Parse the tokens!
   client.parse_request_body_response(json.dumps(token_response.json()))
 
@@ -163,9 +172,29 @@ def callback():
 @app.route("/logout")
 @login_required
 def logout():
-  logout_user()
-  session.clear()
-  return redirect(url_for("index"))
+    print(google)
+    # resp = google.post(
+    #     'https://accounts.google.com/o/oauth2/revoke',
+    #     params={'token': token},
+    #     headers = {'content-type': 'application/x-www-form-urlencoded'}
+    # )
+    # requests.post('https://accounts.google.com/o/oauth2/revoke',
+    # params={'token': credentials.token},
+    # headers = {'content-type': 'application/x-www-form-urlencoded'})
+    # if resp.ok:
+    # session.clear()
+    # logout_user()
+    # print(blueprint.token)
+    # token = blueprint.token["access_token"]
+    # resp = google.post(
+    #     "https://accounts.google.com/o/oauth2/revoke",
+    #     params={"token": token},
+    #     headers={"Content-Type": "application/x-www-form-urlencoded"}
+    # )
+    # assert resp.ok, resp.text
+    logout_user()        # Delete Flask-Login's session cookie
+    # del blueprint.token
+    return redirect(url_for("index"))
 
 @app.route('/')
 def index():
