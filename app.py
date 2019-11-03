@@ -164,6 +164,7 @@ def callback():
 @login_required
 def logout():
   logout_user()
+  session.clear()
   return redirect(url_for("index"))
 
 @app.route('/')
@@ -190,7 +191,51 @@ def leaderboard():
 
 @app.route('/teams')
 def teams():
-  return render_template('teams.html')
+  valid_team_list = Team.query.filter(Team.member_count < 3).filter(Team.id != current_user.team_id).all()
+  return render_template('teams.html', team_exist=False, team_list = valid_team_list)
+
+@app.route('/addteam', methods=['GET','POST'])
+def create_team():
+    if request.method == 'POST':
+        team_name = request.form.get("newteam")
+        # If team exists in database
+        if Team.query.filter(team_name == Team.team_name).all():
+            return render_template('teams.html', team_exist=True)
+        else:
+            old_team_id = current_user.team_id
+            if old_team_id:
+                current_user.team_id=None
+                if Team.query.get(old_team_id).member_count == 1:
+                    db.session.delete(Team.query.get(old_team_id))
+                else:
+                    old_team = Team.query.get(old_team_id)
+                    old_team.member_count = old_team.member_count - 1
+            team = Team(team_name=team_name, member_count=1)
+            db.session.add(team)
+            db.session.commit()
+            current_user.team_id = Team.query.filter(team_name == Team.team_name).first().id
+            db.session.commit()
+            return redirect(url_for("index"))
+
+@app.route('/jointeam/<team_id>', methods=['GET', 'POST'])
+def join_team(team_id):
+    old_team_id = current_user.team_id
+    if old_team_id:
+        current_user.team_id=None
+        if Team.query.get(old_team_id).member_count == 1:
+            Team.query.filter_by(id=old_team_id).delete()
+        else:
+            old_team = Team.query.get(old_team_id)
+            old_team.member_count = old_team.member_count - 1
+
+    team = Team.query.get(team_id)
+    team.member_count = team.member_count + 1
+    current_user.team_id = team_id
+    db.session.commit()
+    return redirect(url_for("index"))
+
+
+
 
 @app.route('/activities')
 def activities():
@@ -198,5 +243,3 @@ def activities():
 
 if __name__ == '__main__':
   app.run(ssl_context="adhoc")
-
-
