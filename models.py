@@ -9,6 +9,7 @@ class Team(db.Model):
   id = db.Column(db.Integer, primary_key = True)
   team_name = db.Column(db.String(250), unique=True)
   member_count = db.Column(db.Integer)
+  date_completed = db.Column(db.DateTime)
 
 class User(db.Model, UserMixin):
   """docstring for User"""
