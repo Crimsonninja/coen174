@@ -192,7 +192,7 @@ def leaderboard():
 @app.route('/teams')
 def teams():
   valid_team_list = Team.query.filter(Team.member_count < 3).filter(Team.id != current_user.team_id).all()
-  return render_template('teams.html', team_exist=False, team_list = valid_team_list)
+  return render_template('teams.html', team_exist=False, team_list = valid_team_list, has_current_team=current_user.team_id)
 
 @app.route('/addteam', methods=['GET','POST'])
 def create_team():
@@ -232,6 +232,19 @@ def join_team(team_id):
     team.member_count = team.member_count + 1
     current_user.team_id = team_id
     db.session.commit()
+    return redirect(url_for("index"))
+
+@app.route('/quitteam', methods=['GET', 'POST'])
+def quit_team():
+    old_team_id = current_user.team_id
+    if old_team_id:
+        current_user.team_id=None
+        if Team.query.get(old_team_id).member_count == 1:
+            Team.query.filter_by(id=old_team_id).delete()
+        else:
+            old_team = Team.query.get(old_team_id)
+            old_team.member_count = old_team.member_count - 1
+        db.session.commit()
     return redirect(url_for("index"))
 
 

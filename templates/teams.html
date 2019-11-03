@@ -23,6 +23,11 @@
   {%- endwith %}
     <div class="jumbotron">
       <h1>Teams</h1>
+      {% if has_current_team %}
+      <form action = "/quitteam" method="post" enctype="multipart/form-data">
+        <button class='btn btn-danger pull-right text-right'>Quit Team</button>
+      </form>
+      {% endif %}
     </div>
     <div class="col-xs-6">
       <div class="jumbotron text-center">
