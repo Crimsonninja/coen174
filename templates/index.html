@@ -29,5 +29,27 @@
         <button type="submit" class="btn btn-primary">Click this button :)</button>
       </p>
     </div>
+    <div class="col-xs-4">
+      <h3>Personal Biking</h3>
+      <h4>{{user_bike}} mi</h4>
+    </div>
+    <div class="col-xs-4">
+      <h3>Personal Running</h3>
+      <h4>{{user_run}} mi</h4>
+    </div>
+    <div class="col-xs-4">
+      <h3>Personal Swimming</h3>
+      <h4>{{user_swim}} mi</h4>
+    </div>
+    {% if team_name %}
+    <h5>Here are the stats for the rest of <strong>Team {{team_name}}</strong>: </h5>
+    <!-- {% for arr_of_distance in arr_of_distances %}
+      {% for thing in arr_of_distance %}
+        <h4>thing</h4>
+        <h5>{{thing}}</h5>
+      {% endfor %}
+    {% endfor %}
+    {% endif %} -->
+
    </div>
 {%- endblock %}

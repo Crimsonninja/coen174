@@ -1,11 +1,11 @@
-{# This simple template derives from ``base.html``. See ``base.html`` for
-   more information about template inheritance. #}
+{# This simple template derives from ``base.html``. See ``base.html`` for more information about template inheritance. #}
 {%- extends "base.html" %}
 
 {# Loads some of the macros included with Flask-Bootstrap. We are using the
    utils module here to automatically render Flask's flashed messages in a
    bootstrap friendly manner #}
 {% import "bootstrap/utils.html" as utils %}
+
 
 {# Inside the ``content`` is where you should place most of your own stuff.
    This will keep scripts at the page end and a navbar you add on later
@@ -23,12 +23,55 @@
   {%- endwith %}
     <div class="jumbotron">
       <h1>Activities</h1>
-      <p>This is where you can add, edit, or remove any activities (biking, running, or swimming)!</p>
-      <p>
-        <!-- <a class="btn btn-lg btn-default" role="button" -->
-           <!-- href="http://pythonhosted.org/Flask-Bootstrap" >Show docs</a> -->
-        <button type="submit" class="btn btn-primary">Some fun button</button>
-      </p>
     </div>
+    <div class="col-xs-6">
+      <div class="jumbotron text-center">
+        <h2>Activity</h2>
+      </div>
+        <form action = "/addactivity" method="post" enctype="multipart/form-data">
+          <div class="form-group">
+            <label for="activity_select">Activity is: </label>
+            <select class="form-control input-sm" id="activity_select" name="activity_select">
+              <option value="biking">Biking</option>
+              <option value="running">Running</option>
+              <option value="swimming">Swimming</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="distance">Miles: </label>
+            <input name="distance" type="number" step="0.01" min="0" class="form-control" id="distance" aria-describedby="emailHelp" placeholder="2.65">
+          </div>
+          <button type="submit" class="btn btn-primary">Add Activity</button>
+        </form>
+    </div>
+    <div class="col-xs-6">
+      <div class="jumbotron text-center">
+        <h2>Activity Log</h2>
+      </div>
+      <table class="table table-hover table-dark">
+          <thead class="thead-dark">
+            <tr>
+              <th scope="col">Activity</th>
+              <th scope="col">Distance (mi)</th>
+              <th scope="col">Date Completed</th>
+              <th scope="col">Edit?</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% if activities_list %}
+            {% for activity in activities_list %}
+              <tr>
+                <td>{{activity.activity_type}}</td>
+                <td>{{activity.distance}}</td>
+                <td>{{activity.date_completed.strftime('%Y-%m-%d')}}</td>
+                <td><a href="editactivity/{{activity.id}}">Edit</td>
+              </tr>
+            {% endfor %}
+          {% endif %}
+          </tbody>
+      </table>
+    </div>
+
    </div>
 {%- endblock %}
+

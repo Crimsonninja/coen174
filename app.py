@@ -1,8 +1,10 @@
 import os, json
+import datetime
+from collections import defaultdict
 from flask import Flask, escape, request, redirect, render_template, session
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import desc
 from flask_bootstrap import Bootstrap
-from flask_dance.contrib.google import make_google_blueprint, google
 from flask_nav import Nav
 from flask_nav.elements import *
 from flask_login import (
@@ -17,12 +19,9 @@ from flask_login import (
 from oauthlib.oauth2 import WebApplicationClient
 import requests
 
-
 app = Flask(__name__)
 app.config.from_object(os.environ['APP_SETTINGS'])
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-token=None
 
 # Creating database
 db = SQLAlchemy(app)
@@ -33,12 +32,6 @@ GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", None)
 GOOGLE_DISCOVERY_URL = (
     "https://accounts.google.com/.well-known/openid-configuration"
 )
-
-blueprint = make_google_blueprint(
-    client_id=GOOGLE_CLIENT_ID,
-    client_secret=GOOGLE_CLIENT_SECRET,
-)
-app.register_blueprint(blueprint, url_prefix="/login")
 
 # User session management setup
 # https://flask-login.readthedocs.io/en/latest
@@ -70,6 +63,7 @@ nav.register_element('top', topbar)
 nav.init_app(app)
 
 from models import Team, User, Activity, User, Role
+from calculator import *
 
 # user_datastore = SQLAlchemyUserDatastore(db.session, User, Role)
 # security = Security(app, user_datastore)
@@ -121,8 +115,6 @@ def callback():
       auth=(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET),
   )
 
-  token=token_response
-
   # Parse the tokens!
   client.parse_request_body_response(json.dumps(token_response.json()))
 
@@ -144,24 +136,13 @@ def callback():
   else:
       return "User email not available or not verified by Google.", 400
 
-  print(f'USERS FIRST NAME IS {users_first_name}!')
-  # Create a user in your db with the information provided
-  # by Google
-
-
-  # print(user.first_name)
-  # print("The Filter")
-  # print(User.query.filter(User.email==user.email))
-
   # Doesn't exist? Add it to the database.
   if not User.query.filter(User.email==users_email).all():
     user = User(first_name=users_first_name, last_name=users_last_name, email=users_email, active=True)
     db.session.add(user)
     db.session.commit()
-    print("COMMITED")
   else:
     user = User.query.filter(User.email==users_email).first()
-    #User.create(unique_id, users_name, users_email, picture)
 
   # Begin user session by logging the user in
   login_user(user)
@@ -172,39 +153,35 @@ def callback():
 @app.route("/logout")
 @login_required
 def logout():
-    print(google)
-    # resp = google.post(
-    #     'https://accounts.google.com/o/oauth2/revoke',
-    #     params={'token': token},
-    #     headers = {'content-type': 'application/x-www-form-urlencoded'}
-    # )
-    # requests.post('https://accounts.google.com/o/oauth2/revoke',
-    # params={'token': credentials.token},
-    # headers = {'content-type': 'application/x-www-form-urlencoded'})
-    # if resp.ok:
-    # session.clear()
-    # logout_user()
-    # print(blueprint.token)
-    # token = blueprint.token["access_token"]
-    # resp = google.post(
-    #     "https://accounts.google.com/o/oauth2/revoke",
-    #     params={"token": token},
-    #     headers={"Content-Type": "application/x-www-form-urlencoded"}
-    # )
-    # assert resp.ok, resp.text
-    logout_user()        # Delete Flask-Login's session cookie
-    # del blueprint.token
-    return redirect(url_for("index"))
+  logout_user()
+  session.clear()
+  return redirect(url_for("index"))
 
 @app.route('/')
 def index():
   if current_user.is_authenticated:
-    return render_template('index.html', user_first_name=current_user.first_name)
-  else:
-    # return '<a class="button" href="/login">Google Login</a>'
-    return render_template('welcome.html')
-  # return render_template('index.html', user_first_name=User.query.first().first_name)
+    team_name=None
+    teammates=None
+    team_dict={}
+    if current_user.team_id:
+      team_name=Team.query.get(current_user.team_id).team_name
+      teammates=User.query.filter_by(team_id = current_user.team_id).all()
+    #   for teammate in teammates:
+    #     print(teammate.first_name)
+    #     team_dict[teammate.first_name] = [total_user_bike(teammate.id), total_user_run(teammate.id), total_user_swim(teammate.id)]
+    # print(team_dict)
 
+    return render_template('index.html',
+                          user_first_name=current_user.first_name,
+                          user_bike=total_user_bike(current_user.id),
+                          user_run=total_user_run(current_user.id),
+                          user_swim=total_user_swim(current_user.id),
+                          team_name=team_name,
+                          teammates=teammates,
+                          team_dict=team_dict
+                          )
+  else:
+    return render_template('welcome.html')
 
 @app.route('/<name>')
 def hello_name(name):
@@ -217,6 +194,8 @@ def user_main():
 @app.route('/leaderboard')
 def leaderboard():
   return render_template('leaderboard.html')
+
+#------------------------------------ Team Methods ------------------------------------
 
 @app.route('/teams')
 def teams():
@@ -276,12 +255,58 @@ def quit_team():
         db.session.commit()
     return redirect(url_for("index"))
 
-
-
+#------------------------------------ Activity Methods ------------------------------------
 
 @app.route('/activities')
 def activities():
-  return render_template('activities.html')
+  print(f'Total User Swim is: {total_user_swim(current_user.id)}')
+  print(f'Total User Run is: {total_user_run(current_user.id)}')
+  print(f'Total User Bike is: {total_user_bike(current_user.id)}')
+  print(f'Total Team Swim is: {total_team_swim(current_user.team_id)}')
+  print(f'Total Team Run is: {total_team_run(current_user.team_id)}')
+  print(f'Total Team Bike is: {total_team_bike(current_user.team_id)}')
+  print(f'Total Team Progress is: {team_progress(current_user.team_id)}')
+  valid_activities_list = Activity.query.filter_by(user_id = current_user.id).order_by(desc(Activity.date_completed)).all()
+  return render_template('activities.html', activities_list=valid_activities_list)
+
+@app.route('/addactivity', methods=['GET', 'POST'])
+def add_activity():
+  if request.method == 'POST':
+    activity_select = request.form.get("activity_select")
+    distance = request.form.get("distance")
+    activity = Activity(activity_type=activity_select,
+                        distance=distance,
+                        date_completed=datetime.datetime.now(),
+                        user_id=current_user.id
+                        )
+    db.session.add(activity)
+    db.session.commit()
+    return redirect(url_for("activities"))
+
+@app.route('/editactivity/<activity_id>', methods=['GET', 'POST'])
+def edit_activity(activity_id):
+  if request.method=='POST':
+    activity_select = request.form.get("activity_select")
+    distance = request.form.get("distance")
+    activity = Activity.query.get(activity_id)
+    activity.activity_type = activity_select
+    activity.distance = distance
+    db.session.commit()
+    return redirect(url_for("activities"))
+  else:
+    activity = Activity.query.get(activity_id)
+    return render_template('edit_activity.html',activity=activity)
+
+@app.route('/removeactivity/<activity_id>', methods=['GET','POST'])
+def remove_activity(activity_id):
+  activity = Activity.query.get(activity_id)
+  db.session.delete(activity)
+  db.session.commit()
+  return redirect(url_for("activities"))
+
+
+
+# @app.route('edit')
 
 if __name__ == '__main__':
   app.run(ssl_context="adhoc")

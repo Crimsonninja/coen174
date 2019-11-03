@@ -1,0 +1,50 @@
+{# This simple template derives from ``base.html``. See ``base.html`` for more information about template inheritance. #}
+{%- extends "base.html" %}
+
+{# Loads some of the macros included with Flask-Bootstrap. We are using the
+   utils module here to automatically render Flask's flashed messages in a
+   bootstrap friendly manner #}
+{% import "bootstrap/utils.html" as utils %}
+
+
+{# Inside the ``content`` is where you should place most of your own stuff.
+   This will keep scripts at the page end and a navbar you add on later
+   intact. #}
+{% block content %}
+  <div class="container">
+  {%- with messages = get_flashed_messages(with_categories=True) %}
+  {%- if messages %}
+    <div class="row">
+      <div class="col-md-12">
+        {{utils.flashed_messages(messages)}}
+      </div>
+    </div>
+  {%- endif %}
+  {%- endwith %}
+  <div class="jumbotron">
+    <h1>Edit Activity</h1>
+    <form action = "/removeactivity/{{activity.id}}" method="post" enctype="multipart/form-data">
+        <button class='btn btn-danger pull-right text-right'>Remove Activity</button>
+      </form>
+  </div>
+  <div class="container">
+    <h2>Old Activity</h2>
+    <p>You performed {{activity.activity_type}} with a distance of {{activity.distance}}</p>
+    <h2>Replace</h2>
+    <form action = "/editactivity/{{activity.id}}" method="post" enctype="multipart/form-data">
+      <div class="form-group">
+        <label for="activity_select">Activity is: </label>
+        <select class="form-control input-sm" id="activity_select" name="activity_select">
+          <option value="biking">Biking</option>
+          <option value="running">Running</option>
+          <option value="swimming">Swimming</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="distance">Miles: </label>
+        <input name="distance" type="number" step="0.01" min="0" class="form-control" id="distance" aria-describedby="emailHelp" placeholder="2.65">
+      </div>
+      <button type="submit" class="btn btn-primary">Edit Activity</button>
+    </form>
+  </div>
+{%- endblock %}
