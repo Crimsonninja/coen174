@@ -160,12 +160,12 @@ def logout():
 @app.route('/')
 def index():
   if current_user.is_authenticated:
-    team_name=None
+    team=None
     teammates=None
     team_dict={}
     if current_user.team_id:
-      team_name=Team.query.get(current_user.team_id).team_name
-      teammates=User.query.filter_by(team_id = current_user.team_id).all()
+      team=Team.query.get(current_user.team_id)
+      teammates=User.query.filter_by(team_id = current_user.team_id).filter(User.id != current_user.id).all()
     #   for teammate in teammates:
     #     print(teammate.first_name)
     #     team_dict[teammate.first_name] = [total_user_bike(teammate.id), total_user_run(teammate.id), total_user_swim(teammate.id)]
@@ -176,7 +176,7 @@ def index():
                           user_bike=total_user_bike(current_user.id),
                           user_run=total_user_run(current_user.id),
                           user_swim=total_user_swim(current_user.id),
-                          team_name=team_name,
+                          team=team,
                           teammates=teammates,
                           team_dict=team_dict
                           )
@@ -193,7 +193,8 @@ def user_main():
 
 @app.route('/leaderboard')
 def leaderboard():
-  return render_template('leaderboard.html')
+  teams=Team.query.all()
+  return render_template('leaderboard.html',teams=teams)
 
 #------------------------------------ Team Methods ------------------------------------
 

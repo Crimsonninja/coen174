@@ -24,10 +24,28 @@
     <div class="jumbotron">
       <h1>Leaderboard</h1>
       <p>This is the leaderboard where all teams will be displayed</p>
-      <p>
-        <a class="btn btn-lg btn-default" role="button"
-           href="http://pythonhosted.org/Flask-Bootstrap" >Show docs</a>
-      </p>
     </div>
+    <table class="table table-hover table-dark">
+          <thead class="thead-dark">
+            <tr>
+              <th scope="col">Rank</th>
+              <th scope="col">Team Name</th>
+              <th scope="col">Progress</th>
+              <th scope="col">Completion Time</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% if teams %}
+            {% for team in teams %}
+              <tr>
+                <td>Some Rank</td>
+                <td>{{team.team_name}}</td>
+                <td>{{'%0d' % team.team_progress()}}%</td>
+                <td>{{team.date_completed.strftime('%Y-%m-%d') if team.date_completed else 'TBD'}}</td>
+              </tr>
+            {% endfor %}
+          {% endif %}
+          </tbody>
+      </table>
    </div>
 {%- endblock %}
