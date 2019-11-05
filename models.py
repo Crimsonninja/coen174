@@ -18,7 +18,9 @@ class Team(db.Model):
   id = db.Column(db.Integer, primary_key = True)
   team_name = db.Column(db.String(250), unique=True)
   member_count = db.Column(db.Integer)
+  # progress = db.Column(db.Float)
   date_completed = db.Column(db.DateTime)
+  # rank = db.Column(db.Integer)
 
   def total_team_bike(self):
     users = User.query.filter_by(team_id = self.id).all()
