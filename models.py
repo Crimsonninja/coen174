@@ -20,6 +20,7 @@ class Team(db.Model):
   member_count = db.Column(db.Integer)
   # progress = db.Column(db.Float)
   date_completed = db.Column(db.DateTime)
+  approved = db.Column(db.Boolean)
   # rank = db.Column(db.Integer)
 
   def total_team_bike(self):
@@ -110,3 +111,4 @@ class Activity(db.Model):
   distance = db.Column(db.Float)
   date_completed = db.Column(db.DateTime)
   user_id = db.Column('user_id', db.Integer, db.ForeignKey('users.id'), nullable=False)
+  problem = db.Column(db.Boolean)

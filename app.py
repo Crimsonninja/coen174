@@ -218,7 +218,7 @@ def create_team():
                 else:
                     old_team = Team.query.get(old_team_id)
                     old_team.member_count = old_team.member_count - 1
-            team = Team(team_name=team_name, member_count=1)
+            team = Team(team_name=team_name, member_count=1,approved=False)
             db.session.add(team)
             db.session.commit()
             current_user.team_id = Team.query.filter(team_name == Team.team_name).first().id
