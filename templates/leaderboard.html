@@ -38,7 +38,7 @@
           {% if teams %}
             {% for team in teams %}
               <tr>
-                <td>Some Rank</td>
+                <td>{{loop.index}}</td>
                 <td>{{team.team_name}}</td>
                 <td>{{'%0d' % team.team_progress()}}%</td>
                 <td>{{team.date_completed.strftime('%Y-%m-%d') if team.date_completed else 'TBD'}}</td>

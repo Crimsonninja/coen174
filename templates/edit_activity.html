@@ -29,15 +29,27 @@
   </div>
   <div class="container">
     <h2>Old Activity</h2>
-    <p>You performed {{activity.activity_type}} with a distance of {{activity.distance}}</p>
+    <p>You performed {{activity.activity_type}} with a distance of {{activity.distance}} miles</p>
     <h2>Replace</h2>
     <form action = "/editactivity/{{activity.id}}" method="post" enctype="multipart/form-data">
       <div class="form-group">
         <label for="activity_select">Activity is: </label>
         <select class="form-control input-sm" id="activity_select" name="activity_select">
-          <option value="biking">Biking</option>
-          <option value="running">Running</option>
-          <option value="swimming">Swimming</option>
+          {%if activity.activity_type=='biking'%}
+            <option value="biking" selected>Biking</option>
+          {% else %}
+            <option value="biking">Biking</option>
+          {% endif %}
+          {%if activity.activity_type=="running"%}
+            <option value="running" selected>Running</option>
+          {% else %}
+            <option value="running">Running</option>
+          {% endif %}
+          {%if activity.activity_type=="swimming"%}
+            <option value="swimming" selected>Swimming</option>
+          {% else %}
+            <option value="swimming">Swimming</option>
+          {% endif %}
         </select>
       </div>
       <div class="form-group">

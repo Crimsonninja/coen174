@@ -177,8 +177,7 @@ def index():
                           user_run=total_user_run(current_user.id),
                           user_swim=total_user_swim(current_user.id),
                           team=team,
-                          teammates=teammates,
-                          team_dict=team_dict
+                          teammates=teammates
                           )
   else:
     return render_template('welcome.html')
