@@ -278,6 +278,7 @@ def add_activity():
                         distance=distance,
                         date_completed=datetime.datetime.now(),
                         user_id=current_user.id
+                        status="pending"
                         )
     db.session.add(activity)
     db.session.commit()

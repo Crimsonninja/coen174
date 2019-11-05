@@ -111,4 +111,4 @@ class Activity(db.Model):
   distance = db.Column(db.Float)
   date_completed = db.Column(db.DateTime)
   user_id = db.Column('user_id', db.Integer, db.ForeignKey('users.id'), nullable=False)
-  problem = db.Column(db.Boolean)
+  status = db.Column(db.String(30))
