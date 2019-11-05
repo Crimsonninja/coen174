@@ -7,7 +7,6 @@
    bootstrap friendly manner #}
 {% import "bootstrap/utils.html" as utils %}
 
-
 {# Inside the ``content`` is where you should place most of your own stuff.
    This will keep scripts at the page end and a navbar you add on later
    intact. #}
@@ -26,52 +25,52 @@
       <h1>Sup {{user_first_name}}</h1>
       <p>Welcome to your dashboard! If you'd like to add an activity you've performed, click on the Activities tab!</p>
     </div>
-    <div class="col-xs-4">
-      <h3>Personal Biking</h3>
-      <h4>{{'%.2f' % user_bike}} mi</h4>
-    </div>
-    <div class="col-xs-4">
-      <h3>Personal Running</h3>
-      <h4>{{'%.2f' % user_run}} mi</h4>
-    </div>
-    <div class="col-xs-4">
-      <h3>Personal Swimming</h3>
-      <h4>{{'%.2f' % user_swim}} mi</h4>
+    <div class="row">
+      <div class="col-xs-4">
+        <h3>Personal Biking</h3>
+        <h4>{{'%.2f' % user_bike}} mi</h4>
+      </div>
+      <div class="col-xs-4">
+        <h3>Personal Running</h3>
+        <h4>{{'%.2f' % user_run}} mi</h4>
+      </div>
+      <div class="col-xs-4">
+        <h3>Personal Swimming</h3>
+        <h4>{{'%.2f' % user_swim}} mi</h4>
+      </div>
     </div>
     {% if team %}
     <h3>Here are the stats for the rest of <strong>Team {{team.team_name}}</strong>: </h3>
     {% for teammate in teammates %}
-      <div class="col-xs-4">
-        <h3>{{teammate.first_name}}'s Biking</h3>
-        <h4>{{'%.2f' % teammate.total_user_bike()}} mi</h4>
-      </div>
-      <div class="col-xs-4">
-        <h3>{{teammate.first_name}}'s Running</h3>
-        <h4>{{'%.2f' % teammate.total_user_run()}} mi</h4>
-      </div>
-      <div class="col-xs-4">
-        <h3>{{teammate.first_name}}'s Swimming</h3>
-        <h4>{{'%.2f' % teammate.total_user_swim()}} mi</h4>
+      <div class="row">
+        <div class="col-xs-4">
+          <h3>{{teammate.first_name}}'s Biking</h3>
+          <h4>{{'%.2f' % teammate.total_user_bike()}} mi</h4>
+        </div>
+        <div class="col-xs-4">
+          <h3>{{teammate.first_name}}'s Running</h3>
+          <h4>{{'%.2f' % teammate.total_user_run()}} mi</h4>
+        </div>
+        <div class="col-xs-4">
+          <h3>{{teammate.first_name}}'s Swimming</h3>
+          <h4>{{'%.2f' % teammate.total_user_swim()}} mi</h4>
+        </div>
       </div>
     {% endfor %}
-    <div class="col-xs-4">
-      <h3>Team Biking</h3>
-      <h4>{{'%.2f' % team.total_team_bike()}} mi</h4>
+    <div class="row">
+      <div class="col-xs-4">
+        <h3>Team Biking</h3>
+        <h4>{{'%.2f' % team.total_team_bike()}} mi</h4>
+      </div>
+      <div class="col-xs-4">
+        <h3>Team Running</h3>
+        <h4>{{'%.2f' % team.total_team_run()}} mi</h4>
+      </div>
+      <div class="col-xs-4">
+        <h3>Team Swimming</h3>
+        <h4>{{'%.2f' % team.total_team_swim()}} mi</h4>
+      </div>
     </div>
-    <div class="col-xs-4">
-      <h3>Team Running</h3>
-      <h4>{{'%.2f' % team.total_team_run()}} mi</h4>
-    </div>
-    <div class="col-xs-4">
-      <h3>Team Swimming</h3>
-      <h4>{{'%.2f' % team.total_team_swim()}} mi</h4>
-    </div>
-    <!-- {% for arr_of_distance in arr_of_distances %}
-      {% for thing in arr_of_distance %}
-        <h4>thing</h4>
-        <h5>{{thing}}</h5>
-      {% endfor %}
-    {% endfor %} -->
     {% endif %}
 
    </div>
