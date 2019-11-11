@@ -21,6 +21,7 @@ class Team(db.Model):
   # progress = db.Column(db.Float)
   date_completed = db.Column(db.DateTime)
   approved = db.Column(db.Boolean)
+  users = db.relationship("User")
   # rank = db.Column(db.Integer)
 
   def total_team_bike(self):
@@ -72,7 +73,10 @@ class User(db.Model, UserMixin):
   last_name = db.Column(db.String(250))
   team_id = db.Column('team_id',db.Integer, db.ForeignKey('teams.id'), nullable=True)
   active = db.Column(db.Boolean)
+  admin = db.Column(db.Boolean)
   roles = db.relationship('Role', secondary='roles_users', backref=db.backref('users', lazy='dynamic'))
+  team = db.relationship("Team", back_populates="users")
+  activities = db.relationship("Activity")
 
   def total_user_bike(self):
     return Activity.query.filter_by(user_id = self.id) \
@@ -112,3 +116,4 @@ class Activity(db.Model):
   date_completed = db.Column(db.DateTime)
   user_id = db.Column('user_id', db.Integer, db.ForeignKey('users.id'), nullable=False)
   status = db.Column(db.String(30))
+  user = db.relationship("User", back_populates="activities")

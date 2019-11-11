@@ -1,0 +1,55 @@
+{# This simple template derives from ``base.html``. See ``base.html`` for
+   more information about template inheritance. #}
+{%- extends "base.html" %}
+
+{# Loads some of the macros included with Flask-Bootstrap. We are using the
+   utils module here to automatically render Flask's flashed messages in a
+   bootstrap friendly manner #}
+{% import "bootstrap/utils.html" as utils %}
+
+{# Inside the ``content`` is where you should place most of your own stuff.
+   This will keep scripts at the page end and a navbar you add on later
+   intact. #}
+{% block content %}
+  <div class="container">
+  {%- with messages = get_flashed_messages(with_categories=True) %}
+  {%- if messages %}
+    <div class="row">
+      <div class="col-md-12">
+        {{utils.flashed_messages(messages)}}
+      </div>
+    </div>
+  {%- endif %}
+  {%- endwith %}
+    <div class="jumbotron">
+      <h1>Activity Logs</h1>
+      <p>These are the logs where all activities are sorted by most recent date</p>
+    </div>
+    <table class="table table-hover table-dark">
+          <thead class="thead-dark">
+            <tr>
+              <th scope="col">User First Name</th>
+              <th scope="col">User Last Name</th>
+              <th scope="col">User Email</th>
+              <th scope="col">Activity Type</th>
+              <th scope="col">Miles</th>
+              <th scope="col">Time Completed</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% if activity_list %}
+            {% for activity in activity_list %}
+              <tr>
+                <td>{{activity.user.first_name}}</td>
+                <td>{{activity.user.last_name}}</td>
+                <td>{{activity.user.email}}</td>
+                <td>{{activity.activity_type}}</td>
+                <td>{{activity.distance}}</td>
+                <td>{{activity.date_completed}}</td>
+              </tr>
+            {% endfor %}
+          {% endif %}
+          </tbody>
+      </table>
+  </div>
+{% endblock%}

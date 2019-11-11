@@ -3,10 +3,12 @@ import datetime
 from collections import defaultdict
 from flask import Flask, escape, request, redirect, render_template, session
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import desc
+from sqlalchemy import desc, asc
+# from flask_security import roles_required, SQLAlchemyUserDatastore
 from flask_bootstrap import Bootstrap
 from flask_nav import Nav
 from flask_nav.elements import *
+# from flask_user import UserManager, roles_required
 from flask_login import (
     LoginManager,
     current_user,
@@ -14,7 +16,8 @@ from flask_login import (
     login_user,
     logout_user,
 )
-# from flask_security import Security, SQLAlchemyUserDatastore, \
+# from flask_security import roles_required
+# from flask_security import SQLAlchemyUserDatastore
 #    login_required, current_user, login_user, logout_user
 from oauthlib.oauth2 import WebApplicationClient
 import requests
@@ -37,6 +40,8 @@ GOOGLE_DISCOVERY_URL = (
 # https://flask-login.readthedocs.io/en/latest
 login_manager = LoginManager()
 login_manager.init_app(app)
+
+
 
 # OAuth 2 client setup
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
@@ -66,7 +71,6 @@ from models import Team, User, Activity, User, Role
 from calculator import *
 
 # user_datastore = SQLAlchemyUserDatastore(db.session, User, Role)
-# security = Security(app, user_datastore)
 
 # LOGIN Section
 @login_manager.user_loader
@@ -138,7 +142,7 @@ def callback():
 
   # Doesn't exist? Add it to the database.
   if not User.query.filter(User.email==users_email).all():
-    user = User(first_name=users_first_name, last_name=users_last_name, email=users_email, active=True)
+    user = User(first_name=users_first_name, last_name=users_last_name, email=users_email, active=True, admin=False)
     db.session.add(user)
     db.session.commit()
   else:
@@ -185,10 +189,6 @@ def index():
 @app.route('/<name>')
 def hello_name(name):
   return "Hello {}!".format(name)
-
-@app.route('/user_main')
-def user_main():
-  return render_template('user_index.html')
 
 @app.route('/leaderboard')
 def leaderboard():
@@ -277,7 +277,7 @@ def add_activity():
     activity = Activity(activity_type=activity_select,
                         distance=distance,
                         date_completed=datetime.datetime.now(),
-                        user_id=current_user.id
+                        user_id=current_user.id,
                         status="pending"
                         )
     db.session.add(activity)
@@ -285,6 +285,7 @@ def add_activity():
     return redirect(url_for("activities"))
 
 @app.route('/editactivity/<activity_id>', methods=['GET', 'POST'])
+# @roles_required('admin')
 def edit_activity(activity_id):
   if request.method=='POST':
     activity_select = request.form.get("activity_select")
@@ -305,7 +306,30 @@ def remove_activity(activity_id):
   db.session.commit()
   return redirect(url_for("activities"))
 
+#============================= Admin Methods =============================
 
+@app.route('/admin')
+def admin_dashboard():
+  if current_user.is_authenticated:
+    if current_user.admin:
+      team_list = Team.query.order_by(asc(Team.id)).all()
+      user_list = User.query.order_by(asc(User.id)).all()
+      return render_template('admin_dashboard.html',user_first_name=current_user.first_name,team_list=team_list,user_list=user_list)
+    else:
+      return render_template('error.html')
+  else:
+    return render_template('welcome.html')
+
+@app.route('/admin/logs')
+def admin_logs():
+  if current_user.is_authenticated:
+    if current_user.admin:
+      activity_list = Activity.query.order_by(desc(Activity.date_completed)).all()
+      return render_template('admin_logs.html',activity_list=activity_list)
+    else:
+      return render_template('error.html')
+  else:
+    return render_template('welcome.html')
 
 # @app.route('edit')
 

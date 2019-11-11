@@ -1,0 +1,81 @@
+{# This simple template derives from ``base.html``. See ``base.html`` for
+   more information about template inheritance. #}
+{%- extends "base.html" %}
+
+{# Loads some of the macros included with Flask-Bootstrap. We are using the
+   utils module here to automatically render Flask's flashed messages in a
+   bootstrap friendly manner #}
+{% import "bootstrap/utils.html" as utils %}
+
+{# Inside the ``content`` is where you should place most of your own stuff.
+   This will keep scripts at the page end and a navbar you add on later
+   intact. #}
+{% block content %}
+  <div class="container">
+  {%- with messages = get_flashed_messages(with_categories=True) %}
+  {%- if messages %}
+    <div class="row">
+      <div class="col-md-12">
+        {{utils.flashed_messages(messages)}}
+      </div>
+    </div>
+  {%- endif %}
+  {%- endwith %}
+    <div class="jumbotron">
+      <h1>Sup {{user_first_name}}</h1>
+      <p>Welcome to your administrative dashboard!</p>
+    </div>
+    <div class="col-xs-4">
+      <div class="jumbotron text-center">
+        <h2>Teams</h2>
+      </div>
+      <table class="table table-hover table-dark">
+          <thead class="thead-dark">
+            <tr>
+              <th scope="col">Name</th>
+              <th scope="col">Edit?</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if team_list %}
+              {% for team in team_list %}
+                <tr>
+                  <td>{{team.team_name}}</td>
+                  <td><a href="#">Edit</a></td>
+                </tr>
+              {% endfor %}
+            {% endif %}
+          </tbody>
+      </table>
+    </div>
+    <div class="col-xs-8">
+      <div class="jumbotron text-center">
+        <h2>Users</h2>
+      </div>
+      <table class="table table-hover table-dark">
+          <thead class="thead-dark">
+            <tr>
+              <th scope="col">Email</th>
+              <th scope="col">First Name</th>
+              <th scope="col">Last Name</th>
+              <th scope="col">Team Name</th>
+              <th scope="col">Edit?</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if user_list %}
+              {% for user in user_list %}
+                <tr>
+                  <td>{{user.email}}</td>
+                  <td>{{user.first_name}}</td>
+                  <td>{{user.last_name}}</td>
+                  <td>{{user.team.team_name}}</td>
+                  <td><a href="#">Edit</a></td>
+                </tr>
+              {% endfor %}
+            {% endif %}
+          </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock%}
