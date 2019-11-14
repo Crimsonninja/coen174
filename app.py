@@ -41,7 +41,7 @@ GOOGLE_DISCOVERY_URL = (
 login_manager = LoginManager()
 login_manager.init_app(app)
 
-
+EVENT_START = datetime.datetime(2019, 11, 10)
 
 # OAuth 2 client setup
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
@@ -68,7 +68,6 @@ nav.register_element('top', topbar)
 nav.init_app(app)
 
 from models import Team, User, Activity, User, Role
-from calculator import *
 
 # user_datastore = SQLAlchemyUserDatastore(db.session, User, Role)
 
@@ -177,9 +176,9 @@ def index():
 
     return render_template('index.html',
                           user_first_name=current_user.first_name,
-                          user_bike=total_user_bike(current_user.id),
-                          user_run=total_user_run(current_user.id),
-                          user_swim=total_user_swim(current_user.id),
+                          user_bike=current_user.total_user_bike(),
+                          user_run=current_user.total_user_run(),
+                          user_swim=current_user.total_user_swim(),
                           team=team,
                           teammates=teammates
                           )
@@ -192,7 +191,8 @@ def hello_name(name):
 
 @app.route('/leaderboard')
 def leaderboard():
-  teams=Team.query.all()
+  teams=Team.query.filter(Team.status == 'approved').order_by(desc(Team.progress),asc(Team.date_completed)).all()
+
   return render_template('leaderboard.html',teams=teams)
 
 #------------------------------------ Team Methods ------------------------------------
@@ -218,10 +218,20 @@ def create_team():
                 else:
                     old_team = Team.query.get(old_team_id)
                     old_team.member_count = old_team.member_count - 1
-            team = Team(team_name=team_name, member_count=1,approved=False)
+                    old_team.progress = old_team.team_progress()
+                    if old_team.progress >= 100:
+                        old_team.date_completed = datetime.datetime.now()
+                    else:
+                        old_team.date_completed = None
+            team = Team(team_name=team_name, member_count=1,status='pending')
             db.session.add(team)
             db.session.commit()
             current_user.team_id = Team.query.filter(team_name == Team.team_name).first().id
+            current_user.team.progress = current_user.team.team_progress()
+            if current_user.team.progress >= 100:
+                current_user.team.date_completed = datetime.datetime.now()
+            else:
+                current_user.team.date_completed = None
             db.session.commit()
             return redirect(url_for("index"))
 
@@ -240,6 +250,12 @@ def join_team(team_id):
     team.member_count = team.member_count + 1
     current_user.team_id = team_id
     db.session.commit()
+    current_user.team.progress = current_user.team.team_progress()
+    if current_user.team.progress >= 100:
+        current_user.team.date_completed = datetime.datetime.now()
+    else:
+        current_user.team.date_completed = None
+    db.session.commit()
     return redirect(url_for("index"))
 
 @app.route('/quitteam', methods=['GET', 'POST'])
@@ -252,6 +268,11 @@ def quit_team():
         else:
             old_team = Team.query.get(old_team_id)
             old_team.member_count = old_team.member_count - 1
+            old_team.progress = old_team.team_progress()
+            if old_team.progress >= 100:
+                old_team.date_completed = datetime.datetime.now()
+            else:
+                old_team.date_completed = None
         db.session.commit()
     return redirect(url_for("index"))
 
@@ -259,13 +280,6 @@ def quit_team():
 
 @app.route('/activities')
 def activities():
-  print(f'Total User Swim is: {total_user_swim(current_user.id)}')
-  print(f'Total User Run is: {total_user_run(current_user.id)}')
-  print(f'Total User Bike is: {total_user_bike(current_user.id)}')
-  print(f'Total Team Swim is: {total_team_swim(current_user.team_id)}')
-  print(f'Total Team Run is: {total_team_run(current_user.team_id)}')
-  print(f'Total Team Bike is: {total_team_bike(current_user.team_id)}')
-  print(f'Total Team Progress is: {team_progress(current_user.team_id)}')
   valid_activities_list = Activity.query.filter_by(user_id = current_user.id).order_by(desc(Activity.date_completed)).all()
   return render_template('activities.html', activities_list=valid_activities_list)
 
@@ -282,6 +296,13 @@ def add_activity():
                         )
     db.session.add(activity)
     db.session.commit()
+    if current_user.team:
+        current_user.team.progress = current_user.team.team_progress()
+        if current_user.team.progress >= 100:
+            current_user.team.date_completed = datetime.datetime.now()
+        else:
+            current_user.team.date_completed = None
+        db.session.commit()
     return redirect(url_for("activities"))
 
 @app.route('/editactivity/<activity_id>', methods=['GET', 'POST'])
@@ -320,6 +341,110 @@ def admin_dashboard():
   else:
     return render_template('welcome.html')
 
+@app.route('/admin/edit_team/<teamid>', methods=['GET', 'POST'])
+def admin_edit_team(teamid):
+    print(teamid)
+    team = Team.query.get(teamid)
+    users = team.users
+    return render_template('admin_edit_team.html', team = team, users = users)
+
+@app.route('/admin/edit_team/kicked/<userid>', methods=['GET', 'POST'])
+def admin_kicked_member(userid):
+    current_user = User.query.get(userid)
+    old_team_id = current_user.team_id
+    if old_team_id:
+        current_user.team_id=None
+        if Team.query.get(old_team_id).member_count == 1:
+            Team.query.filter_by(id=old_team_id).delete()
+        else:
+            old_team = Team.query.get(old_team_id)
+            old_team.member_count = old_team.member_count - 1
+            old_team.progress = old_team.team_progress()
+            if old_team.progress >= 100:
+                old_team.date_completed = datetime.datetime.now()
+            else:
+                old_team.date_completed = None
+        db.session.commit()
+    return redirect(url_for("admin_dashboard"))
+
+@app.route('/admin/edit_team/approve/<teamid>', methods=['GET', 'POST'])
+def admin_approve_team(teamid):
+    team = Team.query.get(teamid)
+    team.status = 'approved'
+    db.session.commit()
+    return redirect(url_for("admin_dashboard"))
+
+@app.route('/admin/edit_team/reject/<teamid>', methods=['GET', 'POST'])
+def admin_reject_team(teamid):
+    team = Team.query.get(teamid)
+    team.status = 'rejected'
+    db.session.commit()
+    return redirect(url_for("admin_dashboard"))
+
+@app.route('/admin/edit_user/<userid>', methods=['GET', 'POST'])
+def admin_edit_user(userid):
+    user = User.query.get(userid)
+    valid_team_list = Team.query.filter(Team.member_count < 3).filter(Team.id != user.team_id).all()
+    return render_template('admin_edit_user.html', team_exist=False, team_list = valid_team_list, has_current_team=user.team_id,user=user)
+
+@app.route('/admin/edit_user/addteam/<userid>', methods=['GET','POST'])
+def admin_create_team(userid):
+    user = User.query.get(userid)
+    if request.method == 'POST':
+        team_name = request.form.get("newteam")
+        # If team exists in database
+        if Team.query.filter(team_name == Team.team_name).all():
+            return render_template('teams.html', team_exist=True)
+        else:
+            old_team_id = user.team_id
+            if old_team_id:
+                user.team_id=None
+                if Team.query.get(old_team_id).member_count == 1:
+                    db.session.delete(Team.query.get(old_team_id))
+                else:
+                    old_team = Team.query.get(old_team_id)
+                    old_team.member_count = old_team.member_count - 1
+                    old_team.progress = old_team.team_progress()
+                    if old_team.progress >= 100:
+                        old_team.date_completed = datetime.datetime.now()
+                    else:
+                        old_team.date_completed = None
+            team = Team(team_name=team_name, member_count=1,status='pending')
+            db.session.add(team)
+            db.session.commit()
+            user.team_id = Team.query.filter(team_name == Team.team_name).first().id
+            user.team.progress = user.team.team_progress()
+            if user.team.progress >= 100:
+                user.team.date_completed = datetime.datetime.now()
+            else:
+                user.team.date_completed = None
+            db.session.commit()
+            return redirect(url_for("admin_dashboard"))
+
+@app.route('/admin/edit_user/jointeam/<team_id>/<userid>', methods=['GET', 'POST'])
+def admin_join_team(team_id,userid):
+    user = User.query.get(userid)
+    old_team_id = user.team_id
+    if old_team_id:
+        user.team_id=None
+        if Team.query.get(old_team_id).member_count == 1:
+            Team.query.filter_by(id=old_team_id).delete()
+        else:
+            old_team = Team.query.get(old_team_id)
+            old_team.member_count = old_team.member_count - 1
+
+    team = Team.query.get(team_id)
+    team.member_count = team.member_count + 1
+    user.team_id = team_id
+    db.session.commit()
+    user.team.progress = user.team.team_progress()
+    if user.team.progress >= 100:
+        user.team.date_completed = datetime.datetime.now()
+    else:
+        user.team.date_completed = None
+    db.session.commit()
+    return redirect(url_for("admin_dashboard"))
+
 @app.route('/admin/logs')
 def admin_logs():
   if current_user.is_authenticated:
@@ -330,6 +455,21 @@ def admin_logs():
       return render_template('error.html')
   else:
     return render_template('welcome.html')
+
+@app.route('/admin/logs/approve/<activity_id>', methods=['GET', 'POST'])
+def approve_activity(activity_id):
+    activity = Activity.query.get(activity_id)
+    activity.status = 'approved'
+    db.session.commit()
+    return redirect(url_for("admin_logs"))
+
+@app.route('/admin/logs/reject/<activity_id>', methods=['GET', 'POST'])
+def reject_activity(activity_id):
+    activity = Activity.query.get(activity_id)
+    activity.status = 'rejected'
+    db.session.commit()
+    return redirect(url_for("admin_logs"))
+
 
 # @app.route('edit')
 

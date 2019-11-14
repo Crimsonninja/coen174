@@ -22,18 +22,37 @@
   {%- endif %}
   {%- endwith %}
     <div class="jumbotron">
-      <h1>Teams</h1>
+      <h1>Edit {{user.first_name}}'s Team</h1>
+
       {% if has_current_team %}
-      <form action = "/quitteam" method="post" enctype="multipart/form-data">
-        <button class='btn btn-danger pull-right text-right'>Quit Team</button>
-      </form>
+      <div class="btn-toolbar pull-right" role="toolbar" aria-label="Toolbar with button groups">
+        <div class="btn-group" role="group" aria-label="First group">
+          <a href="/admin/logs" class="mx-3 btn btn-primary pull-right text-right">Admin Logs</a>
+        </div>
+        <div class="btn-group" role="group" aria-label="Second group">
+          <a href="/admin" class="mx-3 btn btn-primary pull-right text-right">Admin Dashboard</a>
+        </div>
+        <div class="btn-group" role="group" aria-label="Second group">
+          <a href="/quitteam" class="mx-3 btn btn-danger pull-right text-right">Quit Team</a>
+        </div>
+      </div>
+
+      {% else %}
+      <div class="btn-toolbar pull-right" role="toolbar" aria-label="Toolbar with button groups">
+        <div class="btn-group" role="group" aria-label="First group">
+          <a href="/admin/logs" class="mx-3 btn btn-primary pull-right text-right">Admin Logs</a>
+        </div>
+        <div class="btn-group" role="group" aria-label="Second group">
+          <a href="/admin" class="mx-3 btn btn-primary pull-right text-right">Admin Dashboard</a>
+        </div>
+      </div>
       {% endif %}
     </div>
     <div class="col-xs-6">
       <div class="jumbotron text-center">
         <h2>Create New Team</h2>
       </div>
-      <form action = "/addteam" method="post" enctype="multipart/form-data">
+      <form action = "/admin/edit_user/addteam/{{user.id}}" method="post" enctype="multipart/form-data">
         <div class="form-group">
           <div class="form-row">
             <div class="col-md-6 mb-3">
@@ -70,7 +89,7 @@
             {% for team in team_list %}
               <tr>
                 <td>{{team.team_name}}</td>
-                <td><a href="/jointeam/{{team.id}}">Join</a></td>
+                <td><a href="/admin/edit_user/jointeam/{{team.id}}/{{user.id}}">Join</a></td>
                 <td>{{team.status}}</td>
               </tr>
             {% endfor %}

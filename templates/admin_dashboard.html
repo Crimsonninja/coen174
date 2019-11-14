@@ -24,6 +24,7 @@
     <div class="jumbotron">
       <h1>Sup {{user_first_name}}</h1>
       <p>Welcome to your administrative dashboard!</p>
+      <a href="/admin/logs" class="btn btn-primary pull-right text-right">Admin Logs</a>
     </div>
     <div class="col-xs-4">
       <div class="jumbotron text-center">
@@ -34,6 +35,7 @@
             <tr>
               <th scope="col">Name</th>
               <th scope="col">Edit?</th>
+              <th scope="col">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -41,7 +43,10 @@
               {% for team in team_list %}
                 <tr>
                   <td>{{team.team_name}}</td>
-                  <td><a href="#">Edit</a></td>
+                  <td><a href="/admin/edit_team/{{team.id}}">Edit</a></td>
+                  <td>{% if team.status == 'pending' %} <a href="/admin/edit_team/approve/{{team.id}}">Approve</a>/
+                    <a href="/admin/edit_team/reject/{{team.id}}">Reject</a> {% elif team.status == 'rejected' %}
+                    <text class="text-danger">Rejected</text> {% else %} Approved {% endif %}
                 </tr>
               {% endfor %}
             {% endif %}
@@ -70,7 +75,7 @@
                   <td>{{user.first_name}}</td>
                   <td>{{user.last_name}}</td>
                   <td>{{user.team.team_name}}</td>
-                  <td><a href="#">Edit</a></td>
+                  <td><a href="/admin/edit_user/{{user.id}}">Edit</a></td>
                 </tr>
               {% endfor %}
             {% endif %}

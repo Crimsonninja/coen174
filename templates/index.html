@@ -21,7 +21,7 @@
     </div>
   {%- endif %}
   {%- endwith %}
-    <div class="jumbotron">
+    <div class="jumbotron red">
       <h1>Sup {{user_first_name}}</h1>
       <p>Welcome to your dashboard! If you'd like to add an activity you've performed, click on the Activities tab!</p>
     </div>
@@ -40,7 +40,8 @@
       </div>
     </div>
     {% if team %}
-    <h3>Here are the stats for the rest of <strong>Team {{team.team_name}}</strong>: </h3>
+    <h3>Here are the stats for the rest of <strong>Team {{team.team_name}}</strong>: {% if team.status == 'pending'%}<text class="text-warning">({{team.status}})</text>
+      {% elif team.status == 'rejected' %} <text class="text-danger"> {% endif %}</h3>
     {% for teammate in teammates %}
       <div class="row">
         <div class="col-xs-4">

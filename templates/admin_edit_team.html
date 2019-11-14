@@ -1,0 +1,62 @@
+{# This simple template derives from ``base.html``. See ``base.html`` for more information about template inheritance. #}
+{%- extends "base.html" %}
+
+{# Loads some of the macros included with Flask-Bootstrap. We are using the
+   utils module here to automatically render Flask's flashed messages in a
+   bootstrap friendly manner #}
+{% import "bootstrap/utils.html" as utils %}
+
+
+{# Inside the ``content`` is where you should place most of your own stuff.
+   This will keep scripts at the page end and a navbar you add on later
+   intact. #}
+{% block content %}
+  <div class="container">
+  {%- with messages = get_flashed_messages(with_categories=True) %}
+  {%- if messages %}
+    <div class="row">
+      <div class="col-md-12">
+        {{utils.flashed_messages(messages)}}
+      </div>
+    </div>
+  {%- endif %}
+  {%- endwith %}
+  <div class="jumbotron">
+    <h1>Edit Team</h1>
+    <div class="btn-toolbar pull-right" role="toolbar" aria-label="Toolbar with button groups">
+      <div class="btn-group" role="group" aria-label="First group">
+        <a href="/admin/logs" class="mx-3 btn btn-primary pull-right text-right">Admin Logs</a>
+      </div>
+      <div class="btn-group" role="group" aria-label="Second group">
+        <a href="/admin" class="mx-3 btn btn-primary pull-right text-right">Admin Dashboard</a>
+      </div>
+    </div>
+  </div>
+  <div class="container">
+    <h2>Team: {{team.team_name}}</h2>
+
+    <div class="col-xs-8">
+      <table class="table table-hover table-dark">
+          <thead class="thead-dark">
+            <tr>
+              <th scope="col">First Name</th>
+              <th scope="col">Last Name</th>
+              <th scope="col">Kick for team?</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if users %}
+              {% for user in users %}
+                <tr>
+                  <td>{{user.first_name}}</td>
+                  <td>{{user.last_name}}</td>
+                  <td><a href="/admin/edit_team/kicked/{{user.id}}" class="text-danger">Kick</a></td>
+                </tr>
+              {% endfor %}
+            {% endif %}
+          </tbody>
+      </table>
+    </div>
+
+  </div>
+{%- endblock %}
