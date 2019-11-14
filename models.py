@@ -18,9 +18,9 @@ class Team(db.Model):
   id = db.Column(db.Integer, primary_key = True)
   team_name = db.Column(db.String(250), unique=True)
   member_count = db.Column(db.Integer)
-  # progress = db.Column(db.Float)
+  progress = db.Column(db.Float)
   date_completed = db.Column(db.DateTime)
-  approved = db.Column(db.Boolean)
+  status = db.Column(db.String)
   users = db.relationship("User")
   # rank = db.Column(db.Integer)
 
@@ -53,12 +53,12 @@ class Team(db.Model):
       weighted_swim = SWIM_WEIGHT
     print(f'WEIGHTED SWIM: {weighted_swim}')
     weighted_run = self.total_team_run()/RUN_GOAL * RUN_WEIGHT
-    if weighted_swim > RUN_WEIGHT:
-      weighted_swim = RUN_WEIGHT
+    if weighted_run > RUN_WEIGHT:
+      weighted_run = RUN_WEIGHT
     print(f'WEIGHTED RUN: {weighted_run}')
     weighted_bike = self.total_team_bike()/BIKE_GOAL * BIKE_WEIGHT
-    if weighted_swim > BIKE_WEIGHT:
-      weighted_swim = BIKE_WEIGHT
+    if weighted_bike > BIKE_WEIGHT:
+      weighted_bike = BIKE_WEIGHT
     print(f'WEIGHTED BIKE: {weighted_bike}')
 
     return (weighted_bike + weighted_run + weighted_run)*100
@@ -80,16 +80,19 @@ class User(db.Model, UserMixin):
 
   def total_user_bike(self):
     return Activity.query.filter_by(user_id = self.id) \
+                .filter_by(status = "approved")  \
                 .filter_by(activity_type = "biking") \
                 .with_entities(func.sum(Activity.distance)).scalar() or 0
 
   def total_user_run(self):
     return Activity.query.filter_by(user_id = self.id) \
+                .filter_by(status = "approved")  \
                 .filter_by(activity_type = "running") \
                 .with_entities(func.sum(Activity.distance)).scalar() or 0
 
   def total_user_swim(self):
     return Activity.query.filter_by(user_id = self.id) \
+                .filter_by(status = "approved")  \
                 .filter_by(activity_type = "swimming") \
                 .with_entities(func.sum(Activity.distance)).scalar() or 0
 
@@ -117,3 +120,4 @@ class Activity(db.Model):
   user_id = db.Column('user_id', db.Integer, db.ForeignKey('users.id'), nullable=False)
   status = db.Column(db.String(30))
   user = db.relationship("User", back_populates="activities")
+  status = db.Column(db.String(10))

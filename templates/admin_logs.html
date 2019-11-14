@@ -24,6 +24,7 @@
     <div class="jumbotron">
       <h1>Activity Logs</h1>
       <p>These are the logs where all activities are sorted by most recent date</p>
+      <a href="/admin" class="btn btn-primary pull-right text-right">Admin Dashboard</a>
     </div>
     <table class="table table-hover table-dark">
           <thead class="thead-dark">
@@ -34,6 +35,7 @@
               <th scope="col">Activity Type</th>
               <th scope="col">Miles</th>
               <th scope="col">Time Completed</th>
+              <th scope="col">Status</th>
             </tr>
           </thead>
           <tbody>
@@ -46,6 +48,8 @@
                 <td>{{activity.activity_type}}</td>
                 <td>{{activity.distance}}</td>
                 <td>{{activity.date_completed}}</td>
+                <td>{% if activity.status == 'pending' %} <a href="/admin/logs/approve/{{activity.id}}">Approve</a>/<a href="/admin/logs/reject/{{activity.id}}">Reject</a>
+                  {% elif activity.status == 'rejected' %} <text class="text-danger">Rejected</text> {% else %} Approved {% endif %}
               </tr>
             {% endfor %}
           {% endif %}

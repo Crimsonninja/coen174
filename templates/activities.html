@@ -54,7 +54,8 @@
               <th scope="col">Activity</th>
               <th scope="col">Distance (mi)</th>
               <th scope="col">Date Completed</th>
-              <th scope="col">Edit?</th>
+              <th scope="col">Status</th>
+              <th scope="col">Edit</th>
             </tr>
           </thead>
           <tbody>
@@ -64,6 +65,7 @@
                 <td>{{activity.activity_type}}</td>
                 <td>{{activity.distance}}</td>
                 <td>{{activity.date_completed.strftime('%Y-%m-%d')}}</td>
+                <td>{{activity.status}}</td>
                 <td><a href="editactivity/{{activity.id}}">Edit</td>
               </tr>
             {% endfor %}
