@@ -206,6 +206,8 @@ def teams():
 def create_team():
     if request.method == 'POST':
         team_name = request.form.get("newteam")
+        if len(team_name) > 20: #security for brute force
+            return redirect(url_for("teams"))
         # If team exists in database
         if Team.query.filter(team_name == Team.team_name).all():
             return render_template('teams.html', team_exist=True)
@@ -287,7 +289,15 @@ def activities():
 def add_activity():
   if request.method == 'POST':
     activity_select = request.form.get("activity_select")
+    #backup to see if someone tries to force invalid input
+    if activity_select != 'biking' and activity_select!='running' and activity_select!='swimming':
+        return redirect(url_for("activities"))
     distance = request.form.get("distance")
+    try:    #backup to see if someone tries to force invalid input
+        distance_num = float(distance)
+        if distance_num > 112 or distance_num <= 0:return redirect(url_for("activities"))
+    except ValueError:
+        return redirect(url_for("activities"))
     activity = Activity(activity_type=activity_select,
                         distance=distance,
                         date_completed=datetime.datetime.now(),
@@ -306,7 +316,6 @@ def add_activity():
     return redirect(url_for("activities"))
 
 @app.route('/editactivity/<activity_id>', methods=['GET', 'POST'])
-# @roles_required('admin')
 def edit_activity(activity_id):
   if request.method=='POST':
     activity_select = request.form.get("activity_select")
@@ -315,6 +324,13 @@ def edit_activity(activity_id):
     activity.activity_type = activity_select
     activity.distance = distance
     db.session.commit()
+    if current_user.team:
+        current_user.team.progress = current_user.team.team_progress()
+        if current_user.team.progress >= 100:
+            current_user.team.date_completed = datetime.datetime.now()
+        else:
+            current_user.team.date_completed = None
+        db.session.commit()
     return redirect(url_for("activities"))
   else:
     activity = Activity.query.get(activity_id)
@@ -325,6 +341,13 @@ def remove_activity(activity_id):
   activity = Activity.query.get(activity_id)
   db.session.delete(activity)
   db.session.commit()
+  if current_user.team:
+      current_user.team.progress = current_user.team.team_progress()
+      if current_user.team.progress >= 100:
+          current_user.team.date_completed = datetime.datetime.now()
+      else:
+          current_user.team.date_completed = None
+      db.session.commit()
   return redirect(url_for("activities"))
 
 #============================= Admin Methods =============================

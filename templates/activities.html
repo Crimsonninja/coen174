@@ -28,21 +28,21 @@
       <div class="jumbotron text-center">
         <h2>Add Activity</h2>
       </div>
-        <form action = "/addactivity" method="post" enctype="multipart/form-data">
-          <div class="form-group">
-            <label for="activity_select">Activity is:</label>
-            <select class="form-control input-sm" id="activity_select" name="activity_select">
-              <option value="biking">Biking</option>
-              <option value="running">Running</option>
-              <option value="swimming">Swimming</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="distance">Miles:</label>
-            <input name="distance" type="number" step="0.01" min="0" max="250" class="form-control" id="distance" aria-describedby="emailHelp" placeholder="2.65">
-          </div>
-          <button type="submit" class="btn btn-primary">Add Activity</button>
-        </form>
+      <form action = "/addactivity" method="post" enctype="multipart/form-data">
+        <div class="form-group">
+          <label for="type">Activity is:</label>
+          <select class="form-control input-sm" id="activity_select" name="activity_select">
+            <option value="biking">Biking</option>
+            <option value="running">Running</option>
+            <option value="swimming">Swimming</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="distance">Miles:</label>
+          <input name="distance" type="number" step="0.01" min="0" max="112" class="form-control" id="distance" aria-describedby="addingActivity" placeholder="2.65">
+        </div>
+        <button type="submit" class="btn btn-primary">Add Activity</button>
+      </form>
     </div>
     <div class="col-xs-6">
       <div class="jumbotron text-center">

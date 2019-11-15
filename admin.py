@@ -4,6 +4,6 @@ from models import User, Role
 # admin_role = Role(name="admin")
 # db.session.commit()
 
-user = User.query.get(4)
+user = User.query.get(1)
 user.admin = True
 db.session.commit()
