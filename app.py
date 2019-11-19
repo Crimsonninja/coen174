@@ -91,6 +91,7 @@ def login():
         authorization_endpoint,
         redirect_uri=request.base_url + "/callback",
         scope=["openid", "email", "profile"],
+        prompt='consent'
     )
     return redirect(request_uri)
 
@@ -117,6 +118,8 @@ def callback():
       data=body,
       auth=(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET),
   )
+
+  current_user.token = token_response
 
   # Parse the tokens!
   client.parse_request_body_response(json.dumps(token_response.json()))
@@ -158,6 +161,9 @@ def callback():
 def logout():
   logout_user()
   session.clear()
+  # requests.post('https://accounts.google.com/o/oauth2/revoke',
+  #   params={'token': client.token},
+  #   headers = {'content-type': 'application/x-www-form-urlencoded'})
   return redirect(url_for("index"))
 
 @app.route('/')
@@ -166,9 +172,12 @@ def index():
     team=None
     teammates=None
     team_dict={}
+    is_admin = False
     if current_user.team_id:
       team=Team.query.get(current_user.team_id)
       teammates=User.query.filter_by(team_id = current_user.team_id).filter(User.id != current_user.id).all()
+    if current_user.admin:
+      is_admin=True
     #   for teammate in teammates:
     #     print(teammate.first_name)
     #     team_dict[teammate.first_name] = [total_user_bike(teammate.id), total_user_run(teammate.id), total_user_swim(teammate.id)]
@@ -180,7 +189,8 @@ def index():
                           user_run=current_user.total_user_run(),
                           user_swim=current_user.total_user_swim(),
                           team=team,
-                          teammates=teammates
+                          teammates=teammates,
+                          is_admin=is_admin
                           )
   else:
     return render_template('welcome.html')
@@ -191,9 +201,11 @@ def hello_name(name):
 
 @app.route('/leaderboard')
 def leaderboard():
-  teams=Team.query.filter(Team.status == 'approved').order_by(desc(Team.progress),asc(Team.date_completed)).all()
 
-  return render_template('leaderboard.html',teams=teams)
+  teams=Team.query.filter(Team.status == 'approved').order_by(Team.progress.desc(),Team.date_completed.asc()).all()
+  for team in teams:
+    print(team.team_name)
+  return render_template('leaderboard.html',teams=teams, event_start=EVENT_START)
 
 #------------------------------------ Team Methods ------------------------------------
 
@@ -245,12 +257,18 @@ def join_team(team_id):
         else:
             old_team = Team.query.get(old_team_id)
             old_team.member_count = old_team.member_count - 1
+            old_team.progress = old_team.team_progress()
+            if old_team.progress >= 100:
+              old_team.date_completed = datetime.datetime.now()
+            else:
+              old_team.date_completed = None
 
     team = Team.query.get(team_id)
     team.member_count = team.member_count + 1
     current_user.team_id = team_id
     db.session.commit()
     current_user.team.progress = current_user.team.team_progress()
+    print(current_user.team.progress)
     if current_user.team.progress >= 100:
         current_user.team.date_completed = datetime.datetime.now()
     else:
@@ -297,12 +315,12 @@ def add_activity():
     db.session.add(activity)
     db.session.commit()
     if current_user.team:
-        current_user.team.progress = current_user.team.team_progress()
-        if current_user.team.progress >= 100:
-            current_user.team.date_completed = datetime.datetime.now()
-        else:
-            current_user.team.date_completed = None
-        db.session.commit()
+      current_user.team.progress = current_user.team.team_progress()
+      if current_user.team.progress >= 100:
+          current_user.team.date_completed = datetime.datetime.now()
+      else:
+          current_user.team.date_completed = None
+      db.session.commit()
     return redirect(url_for("activities"))
 
 @app.route('/editactivity/<activity_id>', methods=['GET', 'POST'])
@@ -314,7 +332,15 @@ def edit_activity(activity_id):
     activity = Activity.query.get(activity_id)
     activity.activity_type = activity_select
     activity.distance = distance
+    activity.status = "pending"
     db.session.commit()
+    if current_user.team:
+      current_user.team.progress = current_user.team.team_progress()
+      if current_user.team.progress >= 100:
+          current_user.team.date_completed = datetime.datetime.now()
+      else:
+          current_user.team.date_completed = None
+      db.session.commit()
     return redirect(url_for("activities"))
   else:
     activity = Activity.query.get(activity_id)
@@ -325,6 +351,13 @@ def remove_activity(activity_id):
   activity = Activity.query.get(activity_id)
   db.session.delete(activity)
   db.session.commit()
+  if current_user.team:
+      current_user.team.progress = current_user.team.team_progress()
+      if current_user.team.progress >= 100:
+          current_user.team.date_completed = datetime.datetime.now()
+      else:
+          current_user.team.date_completed = None
+      db.session.commit()
   return redirect(url_for("activities"))
 
 #============================= Admin Methods =============================
@@ -370,7 +403,13 @@ def admin_kicked_member(userid):
 @app.route('/admin/edit_team/approve/<teamid>', methods=['GET', 'POST'])
 def admin_approve_team(teamid):
     team = Team.query.get(teamid)
+    team.progress = team.team_progress()
     team.status = 'approved'
+    db.session.commit()
+    if team.progress >= 100:
+      team.date_completed = datetime.datetime.now()
+    else:
+      team.date_completed = None
     db.session.commit()
     return redirect(url_for("admin_dashboard"))
 
@@ -460,6 +499,14 @@ def admin_logs():
 def approve_activity(activity_id):
     activity = Activity.query.get(activity_id)
     activity.status = 'approved'
+    db.session.commit()
+    user = activity.user
+    print(f'The User of Approving Activity is: {user.email}')
+    user.team.progress = user.team.team_progress()
+    if user.team.progress >= 100:
+        user.team.date_completed = datetime.datetime.now()
+    else:
+        user.team.date_completed = None
     db.session.commit()
     return redirect(url_for("admin_logs"))
 

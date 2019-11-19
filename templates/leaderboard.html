@@ -23,7 +23,7 @@
   {%- endwith %}
     <div class="jumbotron">
       <h1>Leaderboard</h1>
-      <p>This is the leaderboard where all approved teams will be displayed</p>
+      <p>This is the leaderboard where all teams will be displayed</p>
     </div>
     <table class="table table-hover table-dark">
           <thead class="thead-dark">
@@ -40,8 +40,14 @@
               <tr>
                 <td>{{loop.index}}</td>
                 <td>{{team.team_name}}</td>
-                <td>{{'%0d' % team.team_progress()}}%</td>
-                <td>{{team.date_completed.strftime('%Y-%m-%d') if team.date_completed else 'TBD'}}</td>
+                <td>{{'%0d' % team.progress}}%</td>
+                <td>
+                  {% if team.date_completed %}
+                    {{(team.date_completed - event_start).days}} days, {{(team.date_completed - event_start).seconds//3600}} hours, {{((team.date_completed - event_start).seconds//60)%60}} minutes
+                  {% else %}
+                    TBD
+                  {% endif %}
+                </td>
               </tr>
             {% endfor %}
           {% endif %}
