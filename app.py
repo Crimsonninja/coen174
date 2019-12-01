@@ -156,6 +156,13 @@ def callback():
   # Send user back to homepage
   return redirect(url_for("index"))
 
+@app.before_request
+def before_request():
+    if not request.is_secure and app.env != "development":
+        url = request.url.replace("http://", "https://", 1)
+        code = 302
+        return redirect(url, code=code)
+
 @app.route("/logout")
 @login_required
 def logout():
