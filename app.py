@@ -381,14 +381,17 @@ def add_activity():
   else:
     if request.method == 'POST':
       activity_select = request.form.get("activity_select")
-      if activity_select not in ['Biking', 'Running','Swimming']:
-        return redirect(url_for("activities"))
+      if activity_select not in ['biking', 'running','swimming']:
+       return redirect(url_for("activities"))
       distance = request.form.get("distance")
       if not distance:
+        print("NOT DISTANCE")
         return redirect(url_for("activities"))
-      if not isinstance(distance, int):
+      if not isinstance(distance, float):
+        print("NOT INTEGER")
         return redirect(url_for("activities"))
       if distance < 0 or distance > 250:
+        print("NOT BETWEEN RANGE")
         return redirect(url_for("activities"))
 
       activity = Activity(activity_type=activity_select,
