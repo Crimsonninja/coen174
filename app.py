@@ -381,7 +381,7 @@ def add_activity():
   else:
     if request.method == 'POST':
       activity_select = request.form.get("activity_select")
-      if activity_select not in ['biking', 'running','swimming']:
+      if activity_select not in ['Biking', 'Running','Swimming']:
         return redirect(url_for("activities"))
       distance = request.form.get("distance")
       if not distance:
