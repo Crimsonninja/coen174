@@ -410,9 +410,10 @@ def admin_kicked_member(userid):
 @app.route('/admin/edit_team/approve/<teamid>', methods=['GET', 'POST'])
 def admin_approve_team(teamid):
     team = Team.query.get(teamid)
-    team.progress = team.team_progress()
     team.status = 'approved'
     db.session.commit()
+    team.progress = team.team_progress()
+    print(f'Admin approving team with progress: {team.progress}')
     if team.progress >= 100:
       team.date_completed = datetime.datetime.now()
     else:
@@ -509,13 +510,14 @@ def approve_activity(activity_id):
     db.session.commit()
     user = activity.user
     print(f'The User of Approving Activity is: {user.email}')
-    user.team.progress = user.team.team_progress()
-    if user.team.progress >= 100:
-        user.team.date_completed = datetime.datetime.now()
-    else:
-        user.team.date_completed = None
-    db.session.commit()
-    return redirect(url_for("admin_logs"))
+    if user.team:
+      user.team.progress = user.team.team_progress()
+      if user.team.progress >= 100:
+          user.team.date_completed = datetime.datetime.now()
+      else:
+          user.team.date_completed = None
+      db.session.commit()
+      return redirect(url_for("admin_logs"))
 
 @app.route('/admin/logs/reject/<activity_id>', methods=['GET', 'POST'])
 def reject_activity(activity_id):

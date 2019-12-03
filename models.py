@@ -61,7 +61,7 @@ class Team(db.Model):
       weighted_bike = BIKE_WEIGHT
     print(f'WEIGHTED BIKE: {weighted_bike}')
 
-    return (weighted_bike + weighted_run + weighted_run)*100
+    return (weighted_bike + weighted_run + weighted_swim)*100
 
 class User(db.Model, UserMixin):
   """docstring for User"""

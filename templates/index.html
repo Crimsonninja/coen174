@@ -45,7 +45,7 @@
     </div>
     {% if team %}
     <h3>Here are the stats for the rest of <strong>Team {{team.team_name}}</strong>: {% if team.status == 'pending'%}<text class="text-warning">({{team.status}})</text>
-      {% elif team.status == 'rejected' %} <text class="text-danger"> {% endif %}</h3>
+      {% elif team.status == 'rejected' %} <text class="text-danger">({{team.status}})</text> {% endif %}</h3>
     {% for teammate in teammates %}
       <div class="row">
         <div class="col-xs-4">
