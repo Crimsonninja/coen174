@@ -1,3 +1,6 @@
+# Simon Liu, Jonathan Trinh
+#Summery: Functions that determines what information should be loaded
+#         into a page and how input should interact with the database
 import os, json
 import datetime
 from collections import defaultdict
@@ -53,14 +56,12 @@ Bootstrap(app)
 nav = Nav()
 
 # registers the "top" menubar
-
 topbar = Navbar('',
     View('Home', 'index'),
     View('Activities','activities'),
     View('Leaderboard','leaderboard'),
     View('Teams','teams'),
     View('Logout','logout')
-    # View('Your Account', 'frontend.account_info'),
 )
 
 nav.register_element('top', topbar)
@@ -69,16 +70,26 @@ nav.init_app(app)
 
 from models import Team, User, Activity, User, Role
 
-# user_datastore = SQLAlchemyUserDatastore(db.session, User, Role)
 
-# LOGIN Section
+#Name:login manager
+#Summery: get specific user data
+#Input: user id
+#Output: user data
 @login_manager.user_loader
 def load_user(user_id):
   return User.query.get(user_id)
 
+#Name: Google authentication
+#Summery: get google authentication
+#Input:
+#Output: get google authentication results
 def get_google_provider_cfg():
   return requests.get(GOOGLE_DISCOVERY_URL).json()
 
+#Name: Login from Google
+#Summery: Login with Google and get user data
+#Input:
+#Output: user data from Google
 @app.route("/login")
 def login():
     # Find out what URL to hit for Google login
@@ -95,6 +106,10 @@ def login():
     )
     return redirect(request_uri)
 
+#Name:Login function
+#Summery: Calls Google Login and if correct shows user homepage
+#Input:
+#Output: show homepage if correct, else show login page again
 @app.route("/login/callback")
 def callback():
   # Get authorization code Google sent back to you
@@ -135,7 +150,6 @@ def callback():
   # The user authenticated with Google, authorized your
   # app, and now you've verified their email through Google!
   if userinfo_response.json().get("email_verified"):
-      #unique_id = userinfo_response.json()["sub"]
       users_email = userinfo_response.json()["email"]
       users_first_name = userinfo_response.json()["given_name"]
       users_last_name = userinfo_response.json()["family_name"]
@@ -156,6 +170,10 @@ def callback():
   # Send user back to homepage
   return redirect(url_for("index"))
 
+#Name: Before Request
+#Summery: handle https & http exchange
+#Input:
+#Output: https page
 @app.before_request
 def before_request():
     if not request.is_secure and app.env != "development":
@@ -163,16 +181,21 @@ def before_request():
         code = 302
         return redirect(url, code=code)
 
+#Name: Logout
+#Summery: logout of the application
+#Input:
+#Output: show login page
 @app.route("/logout")
 @login_required
 def logout():
   logout_user()
   session.clear()
-  # requests.post('https://accounts.google.com/o/oauth2/revoke',
-  #   params={'token': client.token},
-  #   headers = {'content-type': 'application/x-www-form-urlencoded'})
   return redirect(url_for("index"))
 
+#Name: Login page
+#Summery: the welcome login page
+#Input: Google's login information
+#Output: Load the dashboard if correct, else show welcome page
 @app.route('/')
 def index():
   if current_user.is_authenticated:
@@ -185,10 +208,6 @@ def index():
       teammates=User.query.filter_by(team_id = current_user.team_id).filter(User.id != current_user.id).all()
     if current_user.admin:
       is_admin=True
-    #   for teammate in teammates:
-    #     print(teammate.first_name)
-    #     team_dict[teammate.first_name] = [total_user_bike(teammate.id), total_user_run(teammate.id), total_user_swim(teammate.id)]
-    # print(team_dict)
 
     return render_template('index.html',
                           user_first_name=current_user.first_name,
@@ -202,10 +221,18 @@ def index():
   else:
     return render_template('welcome.html')
 
+#Name: Hello Name
+#Summery: Get user name and show it
+#Input: User name
+#Output: Show the username in the format
 @app.route('/<name>')
 def hello_name(name):
   return "Hello {}!".format(name)
 
+#Name: Leaderboard
+#Summery: Get the leaderboard of the event
+#Input: Team database
+#Output: sorted list of teams that are approved
 @app.route('/leaderboard')
 def leaderboard():
   if not current_user.is_authenticated:
@@ -218,6 +245,10 @@ def leaderboard():
 
 #------------------------------------ Team Methods ------------------------------------
 
+#Name: Teams
+#Summery: Show the list of team avaliable to join
+#Input: Team database
+#Output: a list of teams avaliable for user to join
 @app.route('/teams')
 def teams():
   if not current_user.is_authenticated:
@@ -226,6 +257,11 @@ def teams():
     valid_team_list = Team.query.filter(Team.member_count < 3).filter(Team.id != current_user.team_id).all()
     return render_template('teams.html', team_exist=False, team_list = valid_team_list, has_current_team=current_user.team_id)
 
+#Name: Create team
+#Summery: Create a new unique team
+#Input: User team name, Team database
+#Output: If successful, show the dashboard with the new team name
+#         and stats. If not show team page again
 @app.route('/addteam', methods=['GET','POST'])
 def create_team():
     if request.method == 'POST':
@@ -259,6 +295,11 @@ def create_team():
             db.session.commit()
             return redirect(url_for("index"))
 
+#Name: Join Team
+#Summery: Join any team that are listed
+#Input: id of the team to join, Team database
+#Output: Show the dahsboard with team stats and name of the team user
+#         joined
 @app.route('/jointeam/<team_id>', methods=['GET', 'POST'])
 def join_team(team_id):
     old_team_id = current_user.team_id
@@ -288,6 +329,10 @@ def join_team(team_id):
     db.session.commit()
     return redirect(url_for("index"))
 
+#Name: Quit Team
+#Summery: Let user quit current team
+#Input: Team database
+#Output: Show dashboard, but without old team's data
 @app.route('/quitteam', methods=['GET', 'POST'])
 def quit_team():
     old_team_id = current_user.team_id
@@ -307,7 +352,10 @@ def quit_team():
     return redirect(url_for("index"))
 
 #------------------------------------ Activity Methods ------------------------------------
-
+#Name: Activities
+#Summery: Show the user's activity and allow user to add new activity
+#Input: Activity database, user id
+#Output: the activity page for user
 @app.route('/activities')
 def activities():
   if not current_user.is_authenticated:
@@ -316,6 +364,10 @@ def activities():
     valid_activities_list = Activity.query.filter_by(user_id = current_user.id).order_by(desc(Activity.date_completed)).all()
     return render_template('activities.html', activities_list=valid_activities_list)
 
+#Name: Add Activity
+#Summery: Let user to add new activities
+#Input: User new activity input, Activity database
+#Output: User dashboard when successful
 @app.route('/addactivity', methods=['GET', 'POST'])
 def add_activity():
   if not current_user.is_authenticated:
@@ -343,8 +395,11 @@ def add_activity():
         db.session.commit()
       return redirect(url_for("activities"))
 
+#Name: Edit Activity
+#Summery: Allow user to edit their acitivity perviously added
+#Input: Activity Database, activity id
+#Output: Show Acitivity Page
 @app.route('/editactivity/<activity_id>', methods=['GET', 'POST'])
-# @roles_required('admin')
 def edit_activity(activity_id):
   if not current_user.is_authenticated:
     return redirect(url_for("index"))
@@ -368,7 +423,10 @@ def edit_activity(activity_id):
     else:
       activity = Activity.query.get(activity_id)
       return render_template('edit_activity.html',activity=activity)
-
+#Name: Remove Activity
+#Summery: Allow user to delete an activity
+#Input: activity id, Activity database
+#Output: Activity page
 @app.route('/removeactivity/<activity_id>', methods=['GET','POST'])
 def remove_activity(activity_id):
   activity = Activity.query.get(activity_id)
@@ -384,7 +442,10 @@ def remove_activity(activity_id):
   return redirect(url_for("activities"))
 
 #============================= Admin Methods =============================
-
+#Name: Admin Dashboard
+#Summery: Display all teams and users to admin
+#Input: Team and User Database
+#Output: Admin dashboard
 @app.route('/admin')
 def admin_dashboard():
   if current_user.is_authenticated:
@@ -397,6 +458,11 @@ def admin_dashboard():
   else:
     return render_template('welcome.html')
 
+#Name: Admin Edit Teams
+#Summery: Show all the memebers in a team and allow admin to kick
+#         memeber out of the team
+#Input: team id, Team Database
+#Output: admin team edit page
 @app.route('/admin/edit_team/<teamid>', methods=['GET', 'POST'])
 def admin_edit_team(teamid):
     print(teamid)
@@ -404,6 +470,10 @@ def admin_edit_team(teamid):
     users = team.users
     return render_template('admin_edit_team.html', team = team, users = users)
 
+#Name: Admin kicked member
+#Summery: Kick memeber from team
+#Input: user id, Team database
+#Output: admin dashboard
 @app.route('/admin/edit_team/kicked/<userid>', methods=['GET', 'POST'])
 def admin_kicked_member(userid):
     current_user = User.query.get(userid)
@@ -423,6 +493,10 @@ def admin_kicked_member(userid):
         db.session.commit()
     return redirect(url_for("admin_dashboard"))
 
+#Name: admin approve team
+#Summery: Approve the team
+#Input: team id
+#Output: Admin dashboard
 @app.route('/admin/edit_team/approve/<teamid>', methods=['GET', 'POST'])
 def admin_approve_team(teamid):
     team = Team.query.get(teamid)
@@ -437,6 +511,10 @@ def admin_approve_team(teamid):
     db.session.commit()
     return redirect(url_for("admin_dashboard"))
 
+#Name: Admin Reject team
+#Summery: Reject the team name
+#Input: teamid
+#Output: Admin Dashboard
 @app.route('/admin/edit_team/reject/<teamid>', methods=['GET', 'POST'])
 def admin_reject_team(teamid):
     team = Team.query.get(teamid)
@@ -444,12 +522,20 @@ def admin_reject_team(teamid):
     db.session.commit()
     return redirect(url_for("admin_dashboard"))
 
+#Name: Admin edit user
+#Summery: Get user information for add to a team
+#Input: user_id, Team Database
+#Output: admine edit user page
 @app.route('/admin/edit_user/<userid>', methods=['GET', 'POST'])
 def admin_edit_user(userid):
     user = User.query.get(userid)
     valid_team_list = Team.query.filter(Team.member_count < 3).filter(Team.id != user.team_id).all()
     return render_template('admin_edit_user.html', team_exist=False, team_list = valid_team_list, has_current_team=user.team_id,user=user)
 
+#Name: Admin Create team
+#Summery: Allow admin to create team for a user
+#Input: userid, Team Database
+#Output: Admin Dashboard
 @app.route('/admin/edit_user/addteam/<userid>', methods=['GET','POST'])
 def admin_create_team(userid):
     user = User.query.get(userid)
@@ -484,6 +570,10 @@ def admin_create_team(userid):
             db.session.commit()
             return redirect(url_for("admin_dashboard"))
 
+#Name: Admin join team
+#Summery: Allow admin to add user to a existing team
+#Input: user_id, Team Database
+#Output: admin dashboard
 @app.route('/admin/edit_user/jointeam/<team_id>/<userid>', methods=['GET', 'POST'])
 def admin_join_team(team_id,userid):
     user = User.query.get(userid)
@@ -508,6 +598,10 @@ def admin_join_team(team_id,userid):
     db.session.commit()
     return redirect(url_for("admin_dashboard"))
 
+#Name: Admin Logs
+#Summery: Show all user activity inputs
+#Input: Acitivity Database
+#Output: If user is admin, whow admin log page. If not, welcome page
 @app.route('/admin/logs')
 def admin_logs():
   if current_user.is_authenticated:
@@ -519,6 +613,10 @@ def admin_logs():
   else:
     return render_template('welcome.html')
 
+#Name: Approve Activity
+#Summery: Allow Admin to approve acitivity
+#Input: activity id, Activity Database
+#Output: admin log page
 @app.route('/admin/logs/approve/<activity_id>', methods=['GET', 'POST'])
 def approve_activity(activity_id):
     activity = Activity.query.get(activity_id)
@@ -535,15 +633,16 @@ def approve_activity(activity_id):
       db.session.commit()
       return redirect(url_for("admin_logs"))
 
+#Name: Reject Activity
+#Summery: Allow Admin to reject acitivity
+#Input: activity_id, Activity Database
+#Output: Admin log page
 @app.route('/admin/logs/reject/<activity_id>', methods=['GET', 'POST'])
 def reject_activity(activity_id):
     activity = Activity.query.get(activity_id)
     activity.status = 'rejected'
     db.session.commit()
     return redirect(url_for("admin_logs"))
-
-
-# @app.route('edit')
 
 if __name__ == '__main__':
   app.run(ssl_context="adhoc")

@@ -1,3 +1,6 @@
+# Simon Liu, Jonathan Trinh
+# Summery: The database structure
+# Classes: Team, User, Role, RolesUsers & Activity
 from app import db
 from sqlalchemy.dialects.postgresql import JSON
 from flask_security import UserMixin, RoleMixin
