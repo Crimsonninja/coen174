@@ -381,22 +381,18 @@ def add_activity():
   else:
     if request.method == 'POST':
       activity_select = request.form.get("activity_select")
+      distance = request.form.get("distance")
+
+      # Checks if user puts in anything not expected
       if activity_select not in ['biking', 'running','swimming']:
        return redirect(url_for("activities"))
-      distance = request.form.get("distance")
       if not distance:
-        print("NOT DISTANCE")
         return redirect(url_for("activities"))
-      # if not distance.isnumeric():
-      #   print("NOT NUMERIC")
-      #   print(type(distance))
-        # return redirect(url_for("activities"))
       try:
         distance_num = float(distance)
       except:
         return redirect(url_for("activities"))
       if distance_num < 0 or distance_num > 250:
-        print("NOT BETWEEN RANGE")
         return redirect(url_for("activities"))
 
       activity = Activity(activity_type=activity_select,
@@ -407,6 +403,8 @@ def add_activity():
                           )
       db.session.add(activity)
       db.session.commit()
+
+      # Updating of team progress
       if current_user.team:
         current_user.team.progress = current_user.team.team_progress()
         if current_user.team.progress >= 100:
@@ -414,6 +412,7 @@ def add_activity():
         else:
             current_user.team.date_completed = None
         db.session.commit()
+
       return redirect(url_for("activities"))
 
 #Name: Edit Activity
@@ -429,6 +428,19 @@ def edit_activity(activity_id):
       activity_select = request.form.get("activity_select")
       distance = request.form.get("distance")
       activity = Activity.query.get(activity_id)
+
+      # Checks if user puts in anything not expected
+      if activity_select not in ['biking', 'running','swimming']:
+        return render_template('edit_activity.html',activity=activity)
+      if not distance:
+        return render_template('edit_activity.html',activity=activity)
+      try:
+        distance_num = float(distance)
+      except:
+        return render_template('edit_activity.html',activity=activity)
+      if distance_num < 0 or distance_num > 250:
+        return render_template('edit_activity.html',activity=activity)
+
       activity.activity_type = activity_select
       activity.distance = distance
       activity.status = "pending"
@@ -444,6 +456,7 @@ def edit_activity(activity_id):
     else:
       activity = Activity.query.get(activity_id)
       return render_template('edit_activity.html',activity=activity)
+
 #Name: Remove Activity
 #Summery: Allow user to delete an activity
 #Input: activity id, Activity database
