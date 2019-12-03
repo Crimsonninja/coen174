@@ -266,7 +266,9 @@ def teams():
 def create_team():
     if request.method == 'POST':
         team_name = request.form.get("newteam")
-        # If team exists in database
+        if len(team_name) > 20:
+          valid_team_list = Team.query.filter(Team.member_count < 3).filter(Team.id != current_user.team_id).all()
+          return render_template('teams.html', team_exist=False, team_list = valid_team_list, has_current_team=current_user.team_id)        # If team exists in database
         if Team.query.filter(team_name == Team.team_name).all():
             return render_template('teams.html', team_exist=True)
         else:
@@ -375,9 +377,16 @@ def add_activity():
   else:
     if request.method == 'POST':
       activity_select = request.form.get("activity_select")
+      if activity_select not in ['biking', 'running','swimming']:
+        return redirect(url_for("activities"))
       distance = request.form.get("distance")
       if not distance:
         return redirect(url_for("activities"))
+      if not isinstance(distance, int):
+        return redirect(url_for("activities"))
+      if distance < 0 or distance > 250:
+        return redirect(url_for("activities"))
+
       activity = Activity(activity_type=activity_select,
                           distance=distance,
                           date_completed=datetime.datetime.now(),
