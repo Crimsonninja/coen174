@@ -208,18 +208,23 @@ def hello_name(name):
 
 @app.route('/leaderboard')
 def leaderboard():
-
-  teams=Team.query.filter(Team.status == 'approved').order_by(Team.progress.desc(),Team.date_completed.asc()).all()
-  for team in teams:
-    print(team.team_name)
-  return render_template('leaderboard.html',teams=teams, event_start=EVENT_START)
+  if not current_user.is_authenticated:
+    return redirect(url_for("index"))
+  else:
+    teams=Team.query.filter(Team.status == 'approved').order_by(Team.progress.desc(),Team.date_completed.asc()).all()
+    for team in teams:
+      print(team.team_name)
+    return render_template('leaderboard.html',teams=teams, event_start=EVENT_START)
 
 #------------------------------------ Team Methods ------------------------------------
 
 @app.route('/teams')
 def teams():
-  valid_team_list = Team.query.filter(Team.member_count < 3).filter(Team.id != current_user.team_id).all()
-  return render_template('teams.html', team_exist=False, team_list = valid_team_list, has_current_team=current_user.team_id)
+  if not current_user.is_authenticated:
+    return redirect(url_for("index"))
+  else:
+    valid_team_list = Team.query.filter(Team.member_count < 3).filter(Team.id != current_user.team_id).all()
+    return render_template('teams.html', team_exist=False, team_list = valid_team_list, has_current_team=current_user.team_id)
 
 @app.route('/addteam', methods=['GET','POST'])
 def create_team():
@@ -305,55 +310,64 @@ def quit_team():
 
 @app.route('/activities')
 def activities():
-  valid_activities_list = Activity.query.filter_by(user_id = current_user.id).order_by(desc(Activity.date_completed)).all()
-  return render_template('activities.html', activities_list=valid_activities_list)
+  if not current_user.is_authenticated:
+    return redirect(url_for("index"))
+  else:
+    valid_activities_list = Activity.query.filter_by(user_id = current_user.id).order_by(desc(Activity.date_completed)).all()
+    return render_template('activities.html', activities_list=valid_activities_list)
 
 @app.route('/addactivity', methods=['GET', 'POST'])
 def add_activity():
-  if request.method == 'POST':
-    activity_select = request.form.get("activity_select")
-    distance = request.form.get("distance")
-    if not distance:
-      return redirect(url_for("activities"))
-    activity = Activity(activity_type=activity_select,
-                        distance=distance,
-                        date_completed=datetime.datetime.now(),
-                        user_id=current_user.id,
-                        status="pending"
-                        )
-    db.session.add(activity)
-    db.session.commit()
-    if current_user.team:
-      current_user.team.progress = current_user.team.team_progress()
-      if current_user.team.progress >= 100:
-          current_user.team.date_completed = datetime.datetime.now()
-      else:
-          current_user.team.date_completed = None
+  if not current_user.is_authenticated:
+    return redirect(url_for("index"))
+  else:
+    if request.method == 'POST':
+      activity_select = request.form.get("activity_select")
+      distance = request.form.get("distance")
+      if not distance:
+        return redirect(url_for("activities"))
+      activity = Activity(activity_type=activity_select,
+                          distance=distance,
+                          date_completed=datetime.datetime.now(),
+                          user_id=current_user.id,
+                          status="pending"
+                          )
+      db.session.add(activity)
       db.session.commit()
-    return redirect(url_for("activities"))
+      if current_user.team:
+        current_user.team.progress = current_user.team.team_progress()
+        if current_user.team.progress >= 100:
+            current_user.team.date_completed = datetime.datetime.now()
+        else:
+            current_user.team.date_completed = None
+        db.session.commit()
+      return redirect(url_for("activities"))
 
 @app.route('/editactivity/<activity_id>', methods=['GET', 'POST'])
 # @roles_required('admin')
 def edit_activity(activity_id):
-  if request.method=='POST':
-    activity_select = request.form.get("activity_select")
-    distance = request.form.get("distance")
-    activity = Activity.query.get(activity_id)
-    activity.activity_type = activity_select
-    activity.distance = distance
-    activity.status = "pending"
-    db.session.commit()
-    if current_user.team:
-      current_user.team.progress = current_user.team.team_progress()
-      if current_user.team.progress >= 100:
-          current_user.team.date_completed = datetime.datetime.now()
-      else:
-          current_user.team.date_completed = None
-      db.session.commit()
-    return redirect(url_for("activities"))
+  if not current_user.is_authenticated:
+    return redirect(url_for("index"))
   else:
-    activity = Activity.query.get(activity_id)
-    return render_template('edit_activity.html',activity=activity)
+    if request.method=='POST':
+      activity_select = request.form.get("activity_select")
+      distance = request.form.get("distance")
+      activity = Activity.query.get(activity_id)
+      activity.activity_type = activity_select
+      activity.distance = distance
+      activity.status = "pending"
+      db.session.commit()
+      if current_user.team:
+        current_user.team.progress = current_user.team.team_progress()
+        if current_user.team.progress >= 100:
+            current_user.team.date_completed = datetime.datetime.now()
+        else:
+            current_user.team.date_completed = None
+        db.session.commit()
+      return redirect(url_for("activities"))
+    else:
+      activity = Activity.query.get(activity_id)
+      return render_template('edit_activity.html',activity=activity)
 
 @app.route('/removeactivity/<activity_id>', methods=['GET','POST'])
 def remove_activity(activity_id):
