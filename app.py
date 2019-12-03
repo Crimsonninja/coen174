@@ -269,6 +269,10 @@ def create_team():
         if len(team_name) > 20:
           valid_team_list = Team.query.filter(Team.member_count < 3).filter(Team.id != current_user.team_id).all()
           return render_template('teams.html', team_exist=False, team_list = valid_team_list, has_current_team=current_user.team_id)        # If team exists in database
+        no_spaces = team_name.replace(" ","")
+        if no_spaces == "":
+          valid_team_list = Team.query.filter(Team.member_count < 3).filter(Team.id != current_user.team_id).all()
+          return render_template('teams.html', team_exist=False, team_list = valid_team_list, has_current_team=current_user.team_id)        # If team exists in database
         if Team.query.filter(team_name == Team.team_name).all():
             return render_template('teams.html', team_exist=True)
         else:
