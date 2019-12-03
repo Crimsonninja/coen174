@@ -387,10 +387,12 @@ def add_activity():
       if not distance:
         print("NOT DISTANCE")
         return redirect(url_for("activities"))
-      if not isinstance(distance, float):
-        print("NOT INTEGER")
+      if not distance.isnumeric():
+        print("NOT NUMERIC")
+        print(type(distance))
         return redirect(url_for("activities"))
-      if distance < 0 or distance > 250:
+      distance_num = float(distance)
+      if distance_num < 0 or distance_num > 250:
         print("NOT BETWEEN RANGE")
         return redirect(url_for("activities"))
 
