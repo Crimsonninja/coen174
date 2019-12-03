@@ -313,6 +313,8 @@ def add_activity():
   if request.method == 'POST':
     activity_select = request.form.get("activity_select")
     distance = request.form.get("distance")
+    if not distance:
+      return redirect(url_for("activities"))
     activity = Activity(activity_type=activity_select,
                         distance=distance,
                         date_completed=datetime.datetime.now(),
